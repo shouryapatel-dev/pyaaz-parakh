@@ -1,0 +1,9 @@
+{
+  "name": "Pyaaz Parakh - AI Onion Grading",
+  "short_name": "Pyaaz Parakh",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f4f6",
+  "theme_color": "#5b2150",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

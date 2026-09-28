@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+python-multipart
+opencv-python-headless
+numpy
+pillow
+reportlab
+qrcode[pil]
+requests
+python-dotenv

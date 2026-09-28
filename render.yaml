@@ -1,0 +1,12 @@
+# Render Blueprint: New -> Blueprint -> pick this repo. Render asks for the
+# ROBOFLOW_API_KEY value during setup (it is never stored in the repo).
+services:
+  - type: web
+    name: pyaaz-parakh
+    runtime: docker
+    plan: free
+    region: singapore
+    healthCheckPath: /api/config
+    envVars:
+      - key: ROBOFLOW_API_KEY
+        sync: false

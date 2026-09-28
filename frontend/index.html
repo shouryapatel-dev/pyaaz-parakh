@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#5b2150">
+  <title>Pyaaz Parakh</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="icon-btn" id="backBtn" aria-label="Back" hidden>&#8592;</button>
+  <div class="brand"><img src="icon.svg" alt=""><div><b>Pyaaz Parakh</b><small>AI Onion Quality Grading</small></div></div>
+</header>
+
+<main id="app">
+
+  <!-- HOME -->
+  <section data-view="home" class="view">
+    <div class="hero">
+      <h1>Grade an onion lot in under 2 minutes</h1>
+      <p>Photograph a sample, let the AI find rotten, damaged, sprouted and undersized bulbs, and get a signed digital report.</p>
+      <button class="btn primary big" data-go="details">+ New inspection</button>
+    </div>
+    <div class="tiles">
+      <button class="tile" data-go="history"><span>&#128196;</span>Past reports</button>
+      <a class="tile" href="/api/mat.pdf" target="_blank"><span>&#128424;</span>Print grading mat</a>
+      <button class="tile" data-go="help"><span>&#10067;</span>How it works</button>
+    </div>
+    <div class="card legend-card">
+      <h3>Grade categories</h3>
+      <div class="legend" id="legend"></div>
+    </div>
+  </section>
+
+  <!-- STEP 1: DETAILS -->
+  <section data-view="details" class="view" hidden>
+    <ol class="stepper"><li class="on">Details</li><li>Lot photos</li><li>Cut test</li><li>Result</li></ol>
+    <form id="detailsForm" class="card form">
+      <label>Farmer name<input name="farmer" required placeholder="e.g. Ramesh Patil"></label>
+      <label>Farmer ID / Aadhaar-linked reg. no.<input name="farmer_id" placeholder="optional"></label>
+      <label>Procurement centre<input name="centre" required placeholder="e.g. Lasalgaon APMC"></label>
+      <label>Inspecting officer<input name="officer" placeholder="optional"></label>
+      <div class="row2">
+        <label>Variety<select name="variety"><option>Red</option><option>Light red</option><option>White</option><option>Yellow</option></select></label>
+        <label>Lot weight (kg)<input name="lot_weight_kg" type="number" inputmode="decimal" min="0" placeholder="e.g. 2500"></label>
+      </div>
+      <p class="muted small" id="gpsStatus">&#128205; Getting location&hellip;</p>
+      <button class="btn primary" type="submit">Next: photograph sample &rarr;</button>
+    </form>
+  </section>
+
+  <!-- STEP 2: LOT PHOTOS -->
+  <section data-view="lot" class="view" hidden>
+    <ol class="stepper"><li class="done">Details</li><li class="on">Lot photos</li><li>Cut test</li><li>Result</li></ol>
+    <div class="card tip">
+      <b>How to photograph</b>
+      <ol class="small">
+        <li>Randomly pick 20&ndash;50 onions from different bags.</li>
+        <li>Spread them in one layer next to the <a href="/api/mat.pdf" target="_blank">grading mat</a> marker.</li>
+        <li>Shoot from directly above in good light.</li>
+      </ol>
+    </div>
+    <div class="capture-row">
+      <label class="btn primary">&#128247; Take photo<input type="file" accept="image/*" capture="environment" data-scan="lot" hidden></label>
+      <label class="btn">&#128444; Upload<input type="file" accept="image/*" data-scan="lot" hidden></label>
+    </div>
+    <div id="lotScans"></div>
+    <div class="card totals" id="lotTotals" hidden></div>
+    <button class="btn primary" id="toCut" disabled>Next: cut test &rarr;</button>
+  </section>
+
+  <!-- STEP 3: CUT TEST -->
+  <section data-view="cut" class="view" hidden>
+    <ol class="stepper"><li class="done">Details</li><li class="done">Lot photos</li><li class="on">Cut test</li><li>Result</li></ol>
+    <div class="card tip">
+      <b>Check for hidden rot</b>
+      <p class="small">Rot inside an onion is invisible from outside. Cut 3&ndash;5 random onions in half and photograph <b>one cut face at a time</b>, close up. Then drag the circle onto the cut face.</p>
+    </div>
+    <div class="capture-row">
+      <label class="btn primary">&#128247; Take photo<input type="file" accept="image/*" capture="environment" data-scan="cut" hidden></label>
+      <label class="btn">&#128444; Upload<input type="file" accept="image/*" data-scan="cut" hidden></label>
+    </div>
+    <div class="card" id="circleEditor" hidden>
+      <canvas id="circleCanvas"></canvas>
+      <label class="small">Circle size<input type="range" id="circleSize" min="0.1" max="0.5" step="0.01" value="0.35"></label>
+      <div class="capture-row">
+        <button class="btn" id="cancelCut">Cancel</button>
+        <button class="btn primary" id="analyseCut">Analyse cut face</button>
+      </div>
+    </div>
+    <div id="cutScans" class="cut-grid"></div>
+    <button class="btn primary" id="toResult">See result &rarr;</button>
+    <button class="btn ghost" id="skipCut">Skip cut test</button>
+  </section>
+
+  <!-- STEP 4: RESULT -->
+  <section data-view="result" class="view" hidden>
+    <ol class="stepper"><li class="done">Details</li><li class="done">Lot photos</li><li class="done">Cut test</li><li class="on">Result</li></ol>
+    <div id="resultBox"></div>
+  </section>
+
+  <!-- HISTORY -->
+  <section data-view="history" class="view" hidden>
+    <h2>Past reports</h2>
+    <div id="historyList"></div>
+  </section>
+
+  <!-- HELP -->
+  <section data-view="help" class="view" hidden>
+    <div class="card">
+      <h2>How grading works</h2>
+      <ol>
+        <li><b>Detect:</b> an AI model (YOLO, trained on 2,600 labelled onion images) finds every bulb and marks rot, mould, sprouting and split/double bulbs.</li>
+        <li><b>Measure:</b> the printed marker of known size converts pixels to millimetres, so undersized bulbs (&lt; <span data-cfg="min_diameter_mm"></span> mm) are measured, not guessed.</li>
+        <li><b>Cut test:</b> cut faces are checked for dark/brown tissue to catch internal rot that is invisible from outside.</li>
+        <li><b>Grade:</b> Grade A % = sound bulbs of full size, adjusted for the internal-rot rate. The rest is URS. A lot with &ge; <span data-cfg="grade_a_min_pct"></span>% Grade A is accepted as FAQ.</li>
+        <li><b>Report:</b> a PDF with photos, GPS, time and a tamper-proof fingerprint + QR code for verification.</li>
+      </ol>
+      <p class="muted small">Thresholds follow the team's reading of AGMARK/NAFED norms and are configurable.</p>
+    </div>
+  </section>
+</main>
+
+<div id="busy" hidden><div class="spinner"></div><p id="busyText">Analysing&hellip;</p></div>
+<div id="toast" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>
